@@ -7,5 +7,38 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# load rvest and Lahman
+library(rvest)
+library(Lahman)
+```
+
+```{r}
+#HallOfFame
+
+```
+
+
+```{r}
+# get full html markup from baseball reference
+url <- "https://www.baseball-reference.com/awards/hof_2024.shtml"
+html <- read_html(url)
+
+# extract tables from baseball reference
+tables <- html_table(html)
+
+baseball_writers <- tables [[1]]
+baseball_writers %>% head()
+cbenp <- tables [[2]]
+cbenp %>% head()
+
+# add the column names from the first row, then delete the first row
+col_name_fix <- baseball_writers[1, ]
+colnames(baseball_writers) <- col_name_fix
+baseball_writers <- baseball_writers[-1, ]
+head(baseball_writers)
+
+
+
 ```
 

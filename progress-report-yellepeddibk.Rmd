@@ -27,3 +27,26 @@ data <- tables[[1]]
 # Display the first few rows of the raw data
 head(data)
 ```
+## Data Cleaning
+```{r}
+# Assign column names from the first row
+colnames(data) <- data[1, ]
+data <- data[-1, ]
+
+# Convert numeric fields to appropriate data types
+data <- data %>%
+  mutate(
+    Votes = parse_number(Votes),
+    `%vote` = parse_number(`%vote`),
+    WAR = parse_number(WAR),
+    WAR7 = parse_number(WAR7),
+    JAWS = parse_number(JAWS)
+  )
+
+# Replace placeholders with NA
+data <- data %>%
+  mutate(across(everything(), ~ na_if(., "N/A")))
+
+# Display the first few rows of the cleaned data
+head(data)
+```

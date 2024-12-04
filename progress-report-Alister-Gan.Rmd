@@ -1,0 +1,34 @@
+---
+title: "progress-report-Alister-Gan"
+output: html_document
+date: "2024-12-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rvest)
+library(dplyr)
+
+
+scrape_year <- function(year) {
+    url <- paste0("https://www.baseball-reference.com/awards/hof_", year, ".shtml")
+    webpage <- read_html(url)
+    tables <- webpage %>% html_table()
+    if (length(tables) > 0) {
+        data <- tables[[1]] %>%
+            mutate(Year = year)
+        return(data)
+    }
+    return(NULL)
+}
+
+all_data <- do.call(rbind, lapply(1936:2024, scrape_year))  # Assuming 1936 is the first year
+
+write.csv(all_data, "Hall_of_Fame_Data.csv", row.names = FALSE)
+
+```
+
+

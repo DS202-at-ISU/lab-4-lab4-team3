@@ -12,3 +12,18 @@ library(rvest)
 library(Lahman)
 library(readr)
 ```
+## Data Scraping
+```{r}
+# Define the URL for the 2024 Hall of Fame voting data
+url <- "https://www.baseball-reference.com/awards/hof_2024.shtml"
+
+# Read the HTML content of the page
+html <- read_html(url)
+
+# Extract the table from the page
+tables <- html_table(html)
+data <- tables[[1]]
+
+# Display the first few rows of the raw data
+head(data)
+```

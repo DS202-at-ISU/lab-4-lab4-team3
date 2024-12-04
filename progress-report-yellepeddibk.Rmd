@@ -6,5 +6,68 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(rvest)
+library(Lahman)
+library(readr)
+```
+## Data Scraping
+```{r}
+# Define the URL for the 2024 Hall of Fame voting data
+url <- "https://www.baseball-reference.com/awards/hof_2024.shtml"
+
+# Read the HTML content of the page
+html <- read_html(url)
+
+# Extract the table from the page
+tables <- html_table(html)
+data <- tables[[1]]
+
+# Display the first few rows of the raw data
+head(data)
+```
+## Data Cleaning
+```{r}
+# Assign column names from the first row
+colnames(data) <- data[1, ]
+data <- data[-1, ]
+
+# Convert numeric fields to appropriate data types
+data <- data %>%
+  mutate(
+    Votes = parse_number(Votes),
+    `%vote` = parse_number(`%vote`),
+    WAR = parse_number(WAR),
+    WAR7 = parse_number(WAR7),
+    JAWS = parse_number(JAWS)
+  )
+
+# Replace placeholders with NA
+data <- data %>%
+  mutate(across(everything(), ~ na_if(., "N/A")))
+
+# Display the first few rows of the cleaned data
+head(data)
+```
+## Appended Data
+```{r}
+# Combine the scraped 2024 data with the existing HallOfFame dataset
+hof_updated <- Lahman::HallOfFame %>%
+  bind_rows(data)
+
+# Display a summary of the updated dataset
+summary(hof_updated)
+```
+## Visualization
+```{r}
+# Visualize the Hall of Fame voting trends
+hof_updated %>% 
+  ggplot(aes(x = yearID, y = votes / needed * 100, group = playerID)) +
+  geom_hline(yintercept = 100, colour = "grey70") + 
+  geom_line() +
+  geom_point(aes(colour = inducted), 
+    data = hof_updated %>% filter(inducted == "Y")) +
+  xlim(c(2000, 2024)) +
+  ylab("Percent of votes")
 ```

@@ -71,3 +71,8 @@ hof_updated %>%
   xlim(c(2000, 2024)) +
   ylab("Percent of votes")
 ```
+## Save to Canvas
+```{r}
+# Save the updated Hall of Fame dataset as a CSV file
+write_csv(hof_updated, "HallOfFame.csv")
+```

@@ -1,0 +1,32 @@
+---
+title: "Progress Report"
+author: "Jacob Johnson"
+date: "2024-12-4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(Lahman)
+library(tidyverse)
+library(rvest)
+```
+```{r}
+# example: what our 2024 data frame should look like
+head(HallOfFame, 3)
+```
+
+- Reading the html table from url
+```{r}
+url_1 <- "https://www.baseball-reference.com/awards/hof_2024.shtml#all_hof_Veterans"
+html_1 <- read_html(url_1)
+html_1
+```
+```{r}
+
+```
+

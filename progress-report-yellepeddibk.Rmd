@@ -11,48 +11,82 @@ library(tidyverse)
 library(rvest)
 library(Lahman)
 library(readr)
+library(dplyr)
 ```
 ## Data Scraping
 ```{r}
+library(rvest)
+
 # Define the URL for the 2024 Hall of Fame voting data
 url <- "https://www.baseball-reference.com/awards/hof_2024.shtml"
 
 # Read the HTML content of the page
 html <- read_html(url)
 
-# Extract the table from the page
-tables <- html_table(html)
-data <- tables[[1]]
+# Extract all tables on the page
+tables <- html_table(html, fill = TRUE)
 
-# Display the first few rows of the raw data
+# Select the table with Hall of Fame data (adjust index if needed)
+data <- tables[[1]]  # Assuming the first table is correct
+
+# Display the first few rows for debugging
+head(data)
+```
+## Clean Column names
+```{r}
+# Define correct column names based on the webpage
+colnames(data) <- c(
+  "Rk", "Name", "YoB", "Votes", "%vote", "HOFm", "HOFs",
+  "Yrs", "WAR", "WAR7", "JAWS", "Jpos",
+  "Batting_G", "AB", "R", "H", "HR", "RBI", "SB", "BB",
+  "BA", "OBP", "SLG", "OPS", "OPS+", "Pitching_W", "L",
+  "ERA", "ERA+", "WHIP", "G", "GS", "SV", "IP", "H_pitch",
+  "HR_pitch", "BB_pitch", "SO", "Pos_Summary"
+)
+
+# Display the cleaned data for debugging
 head(data)
 ```
 ## Data Cleaning
 ```{r}
-# Assign column names from the first row
-colnames(data) <- data[1, ]
-data <- data[-1, ]
-
-# Convert numeric fields to appropriate data types
+# Clean and prepare the dataset
 data <- data %>%
+  filter(!Name %in% c("Name", "Votes", "%vote")) %>%  # Exclude header-like rows
   mutate(
-    Votes = parse_number(Votes),
-    `%vote` = parse_number(`%vote`),
-    WAR = parse_number(WAR),
-    WAR7 = parse_number(WAR7),
-    JAWS = parse_number(JAWS)
+    Percent = parse_number(`%vote`),  # Convert `%vote` to numeric
+    Votes = parse_number(Votes),  # Ensure Votes is numeric
+    WAR = as.numeric(WAR),  # Convert WAR columns to numeric
+    WAR7 = as.numeric(WAR7),
+    JAWS = as.numeric(JAWS),
+    inducted = ifelse(Percent >= 75, "Y", "N"),  # Use Percent for calculations
+    category = "Player"  # Add a default category
+  ) %>%
+  filter(!is.na(Percent)) %>%  # Remove rows with NA in Percent
+  rename(
+    yearID = "YoB",
+    playerID = "Name"
+  ) %>%
+  select(
+    playerID, yearID, Votes, Percent, inducted, category, WAR, WAR7, JAWS
   )
 
-# Replace placeholders with NA
+# Debug: Check the cleaned data
+print(head(data))
+```
+## Drop Duplicates and Irrelavant columns
+```{r}
 data <- data %>%
-  mutate(across(everything(), ~ na_if(., "N/A")))
-
-# Display the first few rows of the cleaned data
-head(data)
+  distinct()  # Remove duplicate rows without dropping required columns
 ```
 ## Appended Data
 ```{r}
-# Combine the scraped 2024 data with the existing HallOfFame dataset
+# Ensure the `yearID` column in `data` is of the same type as `HallOfFame`
+data <- data %>%
+  mutate(
+    yearID = as.integer(yearID)  # Convert yearID to integer
+  )
+
+# Append the cleaned data to the existing HallOfFame dataset
 hof_updated <- Lahman::HallOfFame %>%
   bind_rows(data)
 
@@ -61,16 +95,32 @@ summary(hof_updated)
 ```
 ## Visualization
 ```{r}
-# Visualize the Hall of Fame voting trends
-hof_updated %>% 
-  ggplot(aes(x = yearID, y = votes / needed * 100, group = playerID)) +
-  geom_hline(yintercept = 100, colour = "grey70") + 
+# Ensure `yearID` and `Percent` are valid and numeric
+hof_updated <- hof_updated %>%
+  mutate(
+    yearID = as.numeric(as.character(yearID)),
+    Percent = as.numeric(as.character(Percent))
+  )
+
+# Filter rows with valid `yearID` and `Percent`
+filtered_hof <- hof_updated %>%
+  filter(!is.na(yearID) & !is.na(Percent))
+
+# Debug: Check filtered data
+print(summary(filtered_hof))
+print(head(filtered_hof))
+
+# Plot the chart
+filtered_hof %>%
+  ggplot(aes(x = yearID, y = Percent, group = playerID)) +
+  geom_hline(yintercept = 75, colour = "grey70") + 
   geom_line() +
-  geom_point(aes(colour = inducted), 
-    data = hof_updated %>% filter(inducted == "Y")) +
-  xlim(c(2000, 2024)) +
-  ylab("Percent of votes")
+  geom_point(aes(colour = inducted)) +
+  scale_x_continuous(limits = c(2000, 2024), breaks = seq(2000, 2024, 2)) +
+  ylab("Percent of Votes") +
+  ggtitle("Hall of Fame Voting Trends")
 ```
+
 ## Save to CSV
 ```{r}
 # Save the updated Hall of Fame dataset as a CSV file

@@ -1,7 +1,7 @@
 ---
 title: "Progress Report"
 author: "Bhargav Yellepeddi"
-date: "2024-12-4"
+5date: "2024-12-4"
 output: html_document
 ---
 
@@ -50,6 +50,8 @@ head(data)
 ## Data Cleaning
 ```{r}
 # Clean and prepare the dataset
+current_year <- 2024  # Define the current voting year
+
 data <- data %>%
   filter(!Name %in% c("Name", "Votes", "%vote")) %>%  # Exclude header-like rows
   mutate(
@@ -59,11 +61,11 @@ data <- data %>%
     WAR7 = as.numeric(WAR7),
     JAWS = as.numeric(JAWS),
     inducted = ifelse(Percent >= 75, "Y", "N"),  # Use Percent for calculations
-    category = "Player"  # Add a default category
+    category = "Player",  # Add a default category
+    yearID = current_year - (parse_number(YoB) - 1)  # Transform ordinal to actual year
   ) %>%
   filter(!is.na(Percent)) %>%  # Remove rows with NA in Percent
   rename(
-    yearID = "YoB",
     playerID = "Name"
   ) %>%
   select(
@@ -71,7 +73,10 @@ data <- data %>%
   )
 
 # Debug: Check the cleaned data
+print(summary(data$yearID))
+print(summary(data$Percent))
 print(head(data))
+
 ```
 ## Drop Duplicates and Irrelavant columns
 ```{r}
@@ -116,7 +121,7 @@ filtered_hof %>%
   geom_hline(yintercept = 75, colour = "grey70") + 
   geom_line() +
   geom_point(aes(colour = inducted)) +
-  scale_x_continuous(limits = c(2000, 2024), breaks = seq(2000, 2024, 2)) +
+  scale_x_continuous(limits = c(2015, 2024), breaks = seq(2015, 2024, 1)) +
   ylab("Percent of Votes") +
   ggtitle("Hall of Fame Voting Trends")
 ```

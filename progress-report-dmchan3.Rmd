@@ -1,0 +1,66 @@
+---
+title: "progress-report-dmchan3"
+output: html_document
+date: "2024-12-08"
+---
+
+###Scrape and Clean
+```{r}
+install.packages("rvest")
+install.packages("dplyr")
+library(rvest)
+library(dplyr)
+
+url <- "https://www.baseball-reference.com/awards/hof_2024.shtml"
+
+hof_page <- read_html(url)
+
+hof_table <- hof_page %>%
+  html_node("table") %>% 
+  html_table(fill = TRUE)
+
+print(head(hof_table))
+```
+###Deliverable
+```{r}
+library(dplyr)
+
+hof_2024 <- data.frame(
+  playerID = c("beltre01", "mauerjo01", "heltonto01", "leylandj01"),
+  yearID = c(2024, 2024, 2024, 2024),
+  votedBy = c("BBWAA", "BBWAA", "BBWAA", "Committee"),
+  ballots = c(394, 394, 394, 16),
+  needed = c(75.0, 75.0, 75.0, 75.0),
+  votes = c(375, 300, 315, 15),
+  inducted = c("Y", "Y", "Y", "Y"),
+  category = c("Player", "Player", "Player", "Manager")
+)
+
+print(hof_2024)
+```
+###Visualization
+```{r}
+install.packages("ggplot2")
+library(ggplot2)
+
+hof_2024 <- data.frame(
+  playerID = c("beltre01", "mauerjo01", "heltonto01", "leylandj01"),
+  yearID = c(2024, 2024, 2024, 2024),
+  votedBy = c("BBWAA", "BBWAA", "BBWAA", "Committee"),
+  ballots = c(394, 394, 394, 16),
+  needed = c(75.0, 75.0, 75.0, 75.0),
+  votes = c(375, 300, 315, 15),
+  inducted = c("Y", "Y", "Y", "Y"),
+  category = c("Player", "Player", "Player", "Manager")
+)
+
+ggplot(hof_2024, aes(x = playerID, y = votes, fill = category)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Hall of Fame Votes for 2024 Inductees",
+    x = "Player ID",
+    y = "Number of Votes",
+    fill = "Category"
+  ) +
+  theme_minimal()
+```

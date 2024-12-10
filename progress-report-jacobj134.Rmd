@@ -14,7 +14,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(Lahman)
 library(tidyverse)
 library(rvest)
+library(readr)
 ```
+
+
 ```{r}
 # example: what our 2024 data frame should look like
 head(HallOfFame, 3)
@@ -22,11 +25,39 @@ head(HallOfFame, 3)
 
 - Reading the html table from url
 ```{r}
-url_1 <- "https://www.baseball-reference.com/awards/hof_2024.shtml#all_hof_Veterans"
-html_1 <- read_html(url_1)
-html_1
+# URL for the 2024 Hall of Fame voting data
+url <- "https://www.baseball-reference.com/awards/hof_2024.shtml#all_hof_Veterans"
+
+# Read to HTML 
+html <- read_html(url)
+
+# Extract the table from html
+tables <- html_table(html)
+df <- tables[[1]]
+df2 <- tables[[2]]
+df
+```
+
+```{r}
+colnames(df) <- c(
+  "Rk", "Name", "YoB", "Votes", "%vote", "HOFm", "HOFs", "Yrs", "WAR", "WAR7", "JAWS", "Jpos",
+  "Batting_G", "AB", "R", "H", "HR", "RBI", "SB", "BB","BA", "OBP", "SLG", "OPS", "OPS+", "Pitching_W", "L",
+  "ERA", "ERA+", "WHIP", "G", "GS", "SV", "IP", "H_pitch", "HR_pitch", "BB_pitch", "SO", "Pos_Summary")
+```
+
+```{r}
+# removing first row (columns headers in df)
+df <-slice(df, -1)
+df
 ```
 ```{r}
-
+df %>% mutate(inducted = if_else(`%vote` >= 75, "Y", "N"),
+              yearID = 2024 - (parse_number(YoB) - 1),
+              category = "player") %>% 
+  select(Name, yearID, Votes, `%vote`, inducted,
+         category, WAR, WAR7, JAWS)
+df
 ```
+- How do I make the playerID column?
+- How do I make the votedBy column?
 
